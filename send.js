@@ -1,31 +1,28 @@
-const fetch = require('node-fetch');
+import { Infobip, AuthType } from '@infobip-api/sdk';
+import dotenv from 'dotenv';
 
-async function sendSMS(number, message){
-    const url = 'https://api.infobip.com/sms/2/text/single';
-    const headers = {
-        'Authorization': `App${process.env.INFOBIP_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    };
+dotenv.config();
 
-    const body =  JSON.stringify({
-        from: 'DispatchSMS',
-        to: number,
-        text: message
+async function sendSMS(number, message) {
+    const infobip = new Infobip({
+        baseUrl: String(process.env.INFOBIP_BASE_URL),
+        apiKey: String(process.env.INFOBIP_API_KEY),
+        authType: AuthType.ApiKey,
     });
 
-    try{
-        const response = await fetch(url, {method: 'POST', headers: headers, body: body});
-        if (!response.ok){
-            throw new Error('HTTP error! status: ${response.status}');
-        }
-
-        const data = await response.json();
-        console.log(data);
-        return data;
-    }catch(error){
-        console.error("Error sending SMS:", error);
+    try {
+        await infobip.channels.sms.send({
+            messages: [
+                {
+                    destinations: [{ to: number }],
+                    from: 'DispatchSMS',
+                    text: message
+                }
+            ]
+        });
+    } catch (error) {
+        console.error('Error sending SMS:', error);
     }
 }
 
-module.exports = sendSMS;
+export default sendSMS;
